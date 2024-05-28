@@ -1,32 +1,34 @@
 import requests
-import json
-from config import *
+from config import API_KEY, API_SECRET
 
-def bardata(name, timeframe):
+def bardata(name, timeframe,starttime,endtime):
     url = "https://data.alpaca.markets/v2/stocks/bars"
     
     params = {
         'symbols': name,
         'timeframe': timeframe,
-        'start': '2024-05-21T00:00:00Z',
-        'end': '2024-05-24T00:00:00Z'
+        'start': starttime,
+        'end': endtime
     }
     headers = {
         "accept": "application/json",
         "APCA-API-KEY-ID": API_KEY,
         "APCA-API-SECRET-KEY": API_SECRET
     }
-     #{'c': 477.71, 'h': 477.85, 'l': 473.85, 'n': 535425, 'o': 476.3, 't': '2022-01-03T05:00:00Z', 'v': 74528525, 'vw': 476.552376}
+
     response = requests.get(url, headers=headers, params=params)
     data = response.json()
-    b=data['bars']['SPY']
-    v=0
-    for i in b:
-        fbar= b[v]
-        close = fbar['c']#close price 
-        open = fbar['o'] #open price 
-        high = fbar['h']#high  price 
-        low = fbar['l']#low price 
-        return ( high,low ,close)
-        v+=1
-bardata("spy", "1Day")
+    bars = data['bars'][name]
+
+    close = []
+    open_prices = []
+    high = []
+    low = []
+
+    for bar in bars:
+        close.append(bar['c'])  # close price
+        open_prices.append(bar['o'])  # open price
+        high.append(bar['h'])  # high price
+        low.append(bar['l'])  # low price
+        
+    return high, low, close

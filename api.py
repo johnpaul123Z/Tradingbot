@@ -9,8 +9,10 @@ app.config["DEBUG"] = True
 
 @app.route('/', methods=['GET'])
 def home():
-    
-    print(supertrend.ATR(10,2,3,3))
+    st = supertrend()
+    # Call the Truerange method on the instance
+    result = st.Truerange()
+    print("Truerange:", result)
     return TEST_APLACA_ROUTE()
 
 app.run()
