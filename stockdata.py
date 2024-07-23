@@ -24,12 +24,13 @@ def bardata(name, timeframe,starttime,endtime):
     open_prices = []
     high = []
     low = []
-
+    
     for bar in bars:
+        
         close.append(bar['c'])  # close price
         open_prices.append(bar['o'])  # open price
         high.append(bar['h'])  # high price
         low.append(bar['l'])  # low price
         
     return high, low, close
-
+    
