@@ -1,59 +1,73 @@
 import json
+import rel
 import websocket
 from Indicators import *
-import pandas as pd
-from config import API_KEY, API_SECRET
-
-# Use the correct WebSocket endpoint for stock data
-socket = 'wss://stream.data.alpaca.markets/v2/iex'  # Or 'wss://stream.data.alpaca.markets/v2/iex' based on your subscription level
-
-# Authentication message
-auth_message = {
-    "action": "auth",
-    "key": API_KEY,
-    "secret": API_SECRET
-}
-
-subscription = {
-    "action": "subscribe",
-    "bars": ["SPY"]
-}
-timetamp =[]
+from config import*
+dataset = 'us_stocks_essential'
+tickers = ['TSLA']
 open =[]
 high =[]
 low =[]
 close = []
-def on_message(ws, message):
-    data = json.loads(message)
-   
-    if isinstance(data, list):
-        for item in data:
-            if 'T' in item and item['T'] == 'b':  
-                bar = item
-                timetamp.append(bar['t'])
-                open.append(bar['o'])
-                high.append(bar['h'])
-                low.append(bar['l'])
-                close.append(bar['c']) 
-                si=Supertrend()
-                a=si.runsupertrend(3,5,high,low,close) 
-                print("supertrend data: ",a)
-                         
-   
-def on_error(ws, error):
-    print("Error:", error)
+sth=[]
+stl=[]
+Stt=[]
+Stt.append(0)
+def on_message(wsapp, message):
+     data = json.loads(message)
+     if isinstance(data, dict):
+        # Extract the bar data
+        
+        open.append(data['o'])
+        high.append(data['h'])
+        low .append(data['l'])
+        close.append(data['c'])
+        si=Supertrend() 
+        b,a,St1=si.runsupertrend(3, 3,high,low,close,sth,stl,Stt)
+        Stt.append(St1)
+        if(a!=0):
+            sth.append(a)
+            stl.append(b)
+        print("supertrend data: ",a,b," supertrend direction :", St1)
+       
+        
+        
+def on_error(wsapp, error):
+    print(f'Error: {error}')
 
-def on_close(ws):
-    print("Connection closed")
 
-def on_open(ws):
-    ws.send(json.dumps(auth_message))
-    ws.send(json.dumps(subscription))
+def on_close(wsapp, close_status_code, close_msg):
+    print('Connection is closed')
 
-ws = websocket.WebSocketApp(socket,
-                            on_open=on_open,
-                            on_message=on_message,
-                            on_error=on_error,
-                            on_close=on_close)
 
-ws.run_forever()
+def on_open(wsapp):
+    print('Connection is opened')
+    subscribe(wsapp, dataset, tickers)
+
+
+def subscribe(wsapp, dataset, tickers):
+    sub_request = {
+        'event': 'subscribe',
+        'dataset': dataset,
+        'tickers': tickers,
+        'channel': 'bars',
+        'frequency': '1m',
+        'aggregation': '1m'
+    }
+    wsapp.send(json.dumps(sub_request))
+if __name__ == '__main__':
+    # Open ws connection
+    ws = websocket.WebSocketApp(f'wss://ws.finazon.io/v1?apikey={api_key}',
+                                on_open=on_open,
+                                on_message=on_message,
+                                on_error=on_error)
+    # Start event loop
+    ws.run_forever(
+        # Set dispatcher to automatic reconnection, 5 second reconnect delay if connection closed unexpectedly
+        dispatcher=rel, reconnect=5,
+        # Sending ping with specified interval to prevent disconnecting
+        ping_interval=30, ping_timeout=10,
+    )
+    # Handle Keyboard Interrupt event
+    rel.signal(2, rel.abort)
+    rel.dispatch()

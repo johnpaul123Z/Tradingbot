@@ -17,7 +17,7 @@ def bardata(name, timeframe,starttime,endtime):
     }
 
     response = requests.get(url, headers=headers, params=params)
-    data = response.json()
+    data= response.json()
     bars = data['bars'][name]
 
     close = []
@@ -33,4 +33,3 @@ def bardata(name, timeframe,starttime,endtime):
         low.append(bar['l'])  # low price
         
     return high, low, close
-    
